@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "522858149851",
+    "project_id": "hotelmanager-c155e",
+    "storage_bucket": "hotelmanager-c155e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:522858149851:android:17db02ca5571e7342f19fe",
+        "android_client_info": {
+          "package_name": "com.example.hotelmanager"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBE-kbuOM0vm9mf-LI2PsmEWRhB26FOqKg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
