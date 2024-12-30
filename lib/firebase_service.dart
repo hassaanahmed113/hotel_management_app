@@ -155,7 +155,7 @@ class FirebaseService {
     try {
       final snapshot = await _firestore
           .collection("changeroom_request")
-          .where('user_id', isNotEqualTo: '')
+          .where('user_id', isNotEqualTo: '2fXdC2bMjOPdv2iU196ZToraNsh1')
           .get();
 
       final data = snapshot.docs
@@ -171,7 +171,7 @@ class FirebaseService {
   Stream<List<RoomChangeRequest>> listenToRoomRequest() {
     return _firestore
         .collection("changeroom_request")
-        .where('user_id', isNotEqualTo: '')
+        .where('user_id', isNotEqualTo: '2fXdC2bMjOPdv2iU196ZToraNsh1')
         .snapshots()
         .map((snapshot) {
       return snapshot.docs
