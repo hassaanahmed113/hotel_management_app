@@ -94,6 +94,20 @@ class FirebaseService {
     });
   }
 
+  Future<void> deleteStaff(String staffId) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection("staff")
+          .where('staff_id', isEqualTo: staffId)
+          .get();
+      for (var doc in querySnapshot.docs) {
+        await doc.reference.delete();
+      }
+    } catch (e) {
+      log.log("Error fetching staff: $e");
+    }
+  }
+
   // getIssueUser
   Future<List<Room>> getRoomOnce() async {
     try {
@@ -257,6 +271,19 @@ class FirebaseService {
             .collection("user_profile")
             .doc(request.userId)
             .update(user.toJson());
+
+        final snapshot = await _firestore
+            .collection('room_available')
+            .where('room_number', isEqualTo: request.chngRoomNumber)
+            .where('block_number', isEqualTo: request.chngBlockNumber)
+            .get();
+
+        for (var element in snapshot.docs) {
+          int occupied = element.data()['occupied'] ?? 0;
+          await element.reference.update({
+            'occupied': occupied + 1,
+          });
+        }
       }
     } catch (e, stackTrace) {
       log.log("Error updating request:", error: e, stackTrace: stackTrace);

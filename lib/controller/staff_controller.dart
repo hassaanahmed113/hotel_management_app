@@ -94,6 +94,10 @@ class StaffController extends GetxController {
     });
   }
 
+  void deleteStaff(String staffId) async {
+    await FirebaseService().deleteStaff(staffId);
+  }
+
   void clearText() {
     username.clear();
     firstName.clear();

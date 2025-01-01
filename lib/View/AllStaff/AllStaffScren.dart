@@ -134,6 +134,8 @@ class AllStaffScreen extends StatelessWidget {
                                           ),
                                           ElevatedButton(
                                               onPressed: () {
+                                                controller.deleteStaff(
+                                                    staff.staffId ?? '');
                                                 Navigator.pop(context);
                                               },
                                               child: Text('Delete',
