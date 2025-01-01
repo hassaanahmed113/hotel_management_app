@@ -348,8 +348,13 @@ class StudentIssuesScreen extends StatelessWidget {
                                   child: DetailTile(
                                     icon: Icons.email_outlined,
                                     label: 'Email',
-                                    value:
-                                        '${snapshot.data?[index].user?.email}',
+                                    value: (snapshot.data?[index].user?.email
+                                                ?.length)! >=
+                                            17
+                                        ? '${snapshot.data?[index].user?.email}'
+                                                .substring(0, 17) +
+                                            '...'
+                                        : '${snapshot.data?[index].user?.email}',
                                   ),
                                 ),
                               ],
