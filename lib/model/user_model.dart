@@ -115,7 +115,7 @@ class Charges {
       water: json['water'] as num?,
       status: json['status'] as String?,
       feeId: json['feeId'] as String?,
-      lastPaid: json['lastPaid'] as Timestamp,
+      lastPaid: json['lastPaid'] != null ? json['lastPaid'] as Timestamp : null,
     );
   }
 
