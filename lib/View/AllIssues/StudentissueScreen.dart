@@ -239,32 +239,6 @@ class StudentIssuesScreen extends StatelessWidget {
   final studIsue = Get.put(StudentIssueController());
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> issues = [
-      {
-        'name': 'Uzair Arshad',
-        'room': 'Room 201, Block 2-A',
-        'username': 'Uzair',
-        'email': 'uzair@gmail.com',
-        'issues': [
-          {'type': 'Bathroom', 'comment': 'Leakage', 'status': 'Pending'},
-          {
-            'type': 'Electricity',
-            'comment': 'Fan not working',
-            'status': 'Pending'
-          }
-        ]
-      },
-      {
-        'name': 'Sarah Khan',
-        'room': 'Room 302, Block 1-B',
-        'username': 'Sarah',
-        'email': 'sarah@gmail.com',
-        'issues': [
-          {'type': 'Furniture', 'comment': 'Broken chair', 'status': 'Pending'}
-        ]
-      }
-    ];
-
     return Scaffold(
         backgroundColor: const Color(0xFFF5F5F5),
         appBar: AppBar(
@@ -297,7 +271,6 @@ class StudentIssuesScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(16),
                   itemCount: snapshot.data?.length,
                   itemBuilder: (context, index) {
-                    final studentIssue = snapshot.data?[index];
                     return Container(
                       margin: const EdgeInsets.only(bottom: 16),
                       decoration: BoxDecoration(
@@ -424,8 +397,35 @@ class StudentIssuesScreen extends StatelessWidget {
                                           itemCount: snapshot.data?.length,
                                           itemBuilder: (context, index) {
                                             return IssueCard(
-                                                issueData:
-                                                    snapshot.data?[index]);
+                                              issueData: snapshot.data?[index],
+                                              onPressed: (String docId,
+                                                  String issueId) async {
+                                                Issue? issueClick =
+                                                    snapshot.data
+                                                        ?.where(
+                                                          (element) =>
+                                                              element.issueId ==
+                                                              issueId,
+                                                        )
+                                                        .first;
+                                                if (issueClick?.issueStatus !=
+                                                    'Resolved') {
+                                                  String? allId =
+                                                      await FirebaseService()
+                                                          .getDocumentIdForIssue(
+                                                              docId, issueId);
+
+                                                  issueClick =
+                                                      issueClick?.copyWith(
+                                                          issueStatus:
+                                                              'Resolved');
+                                                  studIsue.updateStudenIssue(
+                                                      issueClick ?? Issue(),
+                                                      docId,
+                                                      allId ?? '');
+                                                }
+                                              },
+                                            );
                                           },
                                         );
                                       }
@@ -443,150 +443,14 @@ class StudentIssuesScreen extends StatelessWidget {
   }
 }
 
-// class StudentIssueCard extends StatelessWidget {
-//   final StudentIssue studentData;
-
-//   StudentIssueCard({
-//     Key? key,
-//     required this.studentData,
-//   }) : super(key: key);
-//   final studIsue = Get.find<StudentIssueController>();
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       margin: const EdgeInsets.only(bottom: 16),
-//       decoration: BoxDecoration(
-//         color: Colors.white,
-//         borderRadius: BorderRadius.circular(16),
-//         boxShadow: [
-//           BoxShadow(
-//             color: const Color(0xff5e35b1).withOpacity(0.1),
-//             blurRadius: 10,
-//             offset: const Offset(0, 2),
-//           ),
-//         ],
-//       ),
-//       child: Column(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           Padding(
-//             padding: const EdgeInsets.all(16),
-//             child: Row(
-//               children: [
-//                 CircleAvatar(
-//                   backgroundColor: const Color(0xff5e35b1).withOpacity(0.1),
-//                   radius: 24,
-//                   child: Text(
-//                     '${studentData.user?.firstName}'
-//                         .substring(0, 2)
-//                         .toUpperCase(),
-//                     style: GoogleFonts.poppins(
-//                       color: const Color(0xff5e35b1),
-//                       fontWeight: FontWeight.bold,
-//                       fontSize: 20,
-//                     ),
-//                   ),
-//                 ),
-//                 const SizedBox(width: 12),
-//                 Expanded(
-//                   child: Column(
-//                     crossAxisAlignment: CrossAxisAlignment.start,
-//                     children: [
-//                       Text(
-//                         '${studentData.user?.firstName} ${studentData.user?.lastName}',
-//                         style: GoogleFonts.poppins(
-//                           fontSize: 16,
-//                           fontWeight: FontWeight.bold,
-//                         ),
-//                       ),
-//                       Text(
-//                         '${studentData.user?.roomNumber}',
-//                         style: GoogleFonts.poppins(
-//                           fontSize: 14,
-//                           color: Colors.black54,
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ),
-//           Padding(
-//             padding: const EdgeInsets.symmetric(horizontal: 16),
-//             child: Row(
-//               children: [
-//                 Expanded(
-//                   child: DetailTile(
-//                     icon: Icons.person_outline,
-//                     label: 'Username',
-//                     value: '${studentData.user?.username}',
-//                   ),
-//                 ),
-//                 Expanded(
-//                   child: DetailTile(
-//                     icon: Icons.email_outlined,
-//                     label: 'Email',
-//                     value: '${studentData.user?.email}',
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ),
-//           const Divider(height: 32),
-//           Padding(
-//             padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-//             child: Column(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 Text(
-//                   'REPORTED ISSUES',
-//                   style: GoogleFonts.poppins(
-//                     fontSize: 12,
-//                     fontWeight: FontWeight.w600,
-//                     color: const Color(0xff5e35b1),
-//                     letterSpacing: 1.2,
-//                   ),
-//                 ),
-//                 const SizedBox(height: 12),
-//                 StreamBuilder<String>(
-//                     stream: FirebaseService().listenForUserIdChanges(),
-//                     builder: (context, snapshot) {
-//                       if (snapshot.connectionState == ConnectionState.waiting) {
-//                         return Center(child: CircularProgressIndicator());
-//                       } else if (snapshot.hasError) {
-//                         return Center(child: Text('Error: ${snapshot.error}'));
-//                       } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-//                         return Center(child: Text('No issues found.'));
-//                       } else {
-//                         studIsue.listenToIDs(snapshot.data ?? "");
-//                         return ListView.builder(
-//                           shrinkWrap: true,
-//                           physics: const NeverScrollableScrollPhysics(),
-//                           itemCount: studentData.allUserIssue?.length,
-//                           itemBuilder: (context, index) {
-//                             Issue? issue = studentData.allUserIssue?[index];
-//                             return IssueCard(issueData: issue);
-//                           },
-//                         );
-//                       }
-//                     })
-//               ],
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
 class IssueCard extends StatelessWidget {
   final Issue? issueData;
+  final void Function(String docId, String id)? onPressed;
 
   const IssueCard({
     Key? key,
     required this.issueData,
+    required this.onPressed,
   }) : super(key: key);
 
   @override
@@ -642,15 +506,21 @@ class IssueCard extends StatelessWidget {
             width: double.infinity,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xff5e35b1),
+                backgroundColor: issueData?.issueStatus == 'Pending'
+                    ? const Color(0xff5e35b1)
+                    : Colors.green,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              onPressed: () {},
+              onPressed: () {
+                onPressed!(issueData?.docId ?? '', issueData?.issueId ?? "");
+              },
               child: Text(
-                'Resolve Issue',
+                issueData?.issueStatus == 'Pending'
+                    ? 'Resolve Issue'
+                    : 'Issue Resolved',
                 style: GoogleFonts.poppins(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -703,7 +573,7 @@ class DetailTile extends StatelessWidget {
               Text(
                 value,
                 style: GoogleFonts.poppins(
-                  fontSize: 14,
+                  fontSize: 10,
                   fontWeight: FontWeight.w600,
                 ),
               ),

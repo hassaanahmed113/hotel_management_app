@@ -1,5 +1,6 @@
 import 'dart:async';
-import 'dart:developer';
+import 'dart:developer' as log;
+import 'dart:math';
 
 import 'package:again/View/Auth/Login/LoginScreen.dart';
 import 'package:again/View/Dashboard/DashboardScreen.dart';
@@ -7,6 +8,7 @@ import 'package:again/controller/dashboard_controller.dart';
 import 'package:again/model/change_request_model.dart';
 import 'package:again/model/create_issue_model.dart';
 import 'package:again/model/room_available_model.dart';
+import 'package:again/model/staff_model.dart';
 import 'package:again/model/student_issue_model.dart';
 import 'package:again/model/user_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -22,6 +24,7 @@ class FirebaseService {
 
   // addIssueUser
   Future<void> addIssueUser(Issue data) async {
+    data = data.copyWith(docId: currentUser?.uid);
     try {
       await _firestore
           .collection("create_issue")
@@ -30,6 +33,15 @@ class FirebaseService {
           .add(data.toJson());
     } catch (e) {
       print('Error addIssueUser: $e');
+    }
+  }
+
+  // addIssueUser
+  Future<void> addStaff(Staff data) async {
+    try {
+      await _firestore.collection("staff").add(data.toJson());
+    } catch (e) {
+      print('Error staff: $e');
     }
   }
 
@@ -46,7 +58,7 @@ class FirebaseService {
           snapshot.docs.map((doc) => Issue.fromJson(doc.data())).toList();
       return data;
     } catch (e) {
-      log("Error fetching issues: $e");
+      log.log("Error fetching issues: $e");
       return [];
     }
   }
@@ -63,6 +75,26 @@ class FirebaseService {
   }
 
   // getIssueUser
+  Future<List<Staff>> getStaff() async {
+    try {
+      final snapshot = await _firestore.collection("staff").get();
+
+      final data =
+          snapshot.docs.map((doc) => Staff.fromJson(doc.data())).toList();
+      return data;
+    } catch (e) {
+      log.log("Error fetching staff: $e");
+      return [];
+    }
+  }
+
+  Stream<List<Staff>> listenToStaff() {
+    return _firestore.collection("staff").snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) => Staff.fromJson(doc.data())).toList();
+    });
+  }
+
+  // getIssueUser
   Future<List<Room>> getRoomOnce() async {
     try {
       final snapshot = await _firestore.collection("room_available").get();
@@ -71,7 +103,7 @@ class FirebaseService {
           snapshot.docs.map((doc) => Room.fromJson(doc.data())).toList();
       return data;
     } catch (e) {
-      log("Error fetching issues: $e");
+      log.log("Error fetching issues: $e");
       return [];
     }
   }
@@ -81,7 +113,7 @@ class FirebaseService {
       try {
         return snapshot.docs.map((doc) => Room.fromJson(doc.data())).toList();
       } catch (e) {
-        log("Error parsing Room data: $e");
+        log.log("Error parsing Room data: $e");
         return [];
       }
     });
@@ -104,7 +136,7 @@ class FirebaseService {
       }
       return null;
     } catch (e) {
-      log("Error fetching user profile: $e");
+      log.log("Error fetching user profile: $e");
       return null;
     }
   }
@@ -125,16 +157,17 @@ class FirebaseService {
     });
   }
 
-  Future<void> updateUserProfile(UserProfile userProfile) async {
+  Future<void> updateUserProfile(
+      {required UserProfile userProfile, String? userId}) async {
     try {
       final userProfileMap = userProfile.toJson();
 
       await _firestore
           .collection("user_profile")
-          .doc(currentUser?.uid)
+          .doc(userId == null ? currentUser?.uid : userId)
           .update(userProfileMap);
     } catch (e, stackTrace) {
-      log("Error updating user profile for userId:",
+      log.log("Error updating user profile for userId:",
           error: e, stackTrace: stackTrace);
     }
   }
@@ -151,11 +184,35 @@ class FirebaseService {
     }
   }
 
+  Future<String?> getDocumentIdForIssue(
+      String mainDocId, String issueId) async {
+    log.log(mainDocId + " UPRR " + issueId);
+    final snapshot = await FirebaseFirestore.instance
+        .collection("create_issue")
+        .doc(mainDocId)
+        .collection("all")
+        .where('issue_id', isEqualTo: issueId)
+        .get();
+
+    log.log(snapshot.docs.first.toString() + " SSSSSSSSSSSSS");
+
+    if (snapshot.docs.isNotEmpty) {
+      return snapshot.docs.first.id;
+    }
+
+    return null;
+  }
+
   Future<List<RoomChangeRequest>> getRoomRequestOnce() async {
     try {
+      final snapshotUser = await _firestore
+          .collection('user_profile')
+          .where('isAdmin', isEqualTo: true)
+          .get();
+      log.log(snapshotUser.docs.first['user_id']);
       final snapshot = await _firestore
           .collection("changeroom_request")
-          .where('user_id', isNotEqualTo: '2fXdC2bMjOPdv2iU196ZToraNsh1')
+          .where('user_id', isNotEqualTo: snapshotUser.docs.first['user_id'])
           .get();
 
       final data = snapshot.docs
@@ -163,15 +220,21 @@ class FirebaseService {
           .toList();
       return data;
     } catch (e) {
-      log("Error fetching issues: $e");
+      log.log("Error fetching issues: $e");
       return [];
     }
   }
 
-  Stream<List<RoomChangeRequest>> listenToRoomRequest() {
-    return _firestore
+  Stream<List<RoomChangeRequest>> listenToRoomRequest() async* {
+    final snapshotUser = await _firestore
+        .collection('user_profile')
+        .where('isAdmin', isEqualTo: true)
+        .get();
+    log.log(snapshotUser.docs.first['user_id']);
+
+    yield* _firestore
         .collection("changeroom_request")
-        .where('user_id', isNotEqualTo: '2fXdC2bMjOPdv2iU196ZToraNsh1')
+        .where('user_id', isNotEqualTo: snapshotUser.docs.first['user_id'])
         .snapshots()
         .map((snapshot) {
       return snapshot.docs
@@ -180,7 +243,8 @@ class FirebaseService {
     });
   }
 
-  Future<void> updateRoomRequest(RoomChangeRequest request) async {
+  Future<void> updateRoomRequest(
+      RoomChangeRequest request, UserProfile user) async {
     try {
       final requestUpdate = request.toJson();
 
@@ -188,8 +252,14 @@ class FirebaseService {
           .collection("changeroom_request")
           .doc(request.userId)
           .update(requestUpdate);
+      if (requestUpdate['status'] == 'Approved') {
+        await _firestore
+            .collection("user_profile")
+            .doc(request.userId)
+            .update(user.toJson());
+      }
     } catch (e, stackTrace) {
-      log("Error updating request:", error: e, stackTrace: stackTrace);
+      log.log("Error updating request:", error: e, stackTrace: stackTrace);
     }
   }
 
@@ -206,7 +276,7 @@ class FirebaseService {
 
       return issues;
     } catch (e) {
-      log("Error fetching issues: $e");
+      log.log("Error fetching issues: $e");
       return [];
     }
   }
@@ -260,7 +330,7 @@ class FirebaseService {
       }
       return null;
     } catch (e) {
-      log("Error fetching user profile: $e");
+      log.log("Error fetching user profile: $e");
       return null;
     }
   }
@@ -276,6 +346,16 @@ class FirebaseService {
           snapshot.docs.map((doc) => Issue.fromJson(doc.data())).toList();
       return data;
     });
+  }
+
+  Future<void> updateIssueUser(
+      Issue issue, String issueDocId, String allId) async {
+    await _firestore
+        .collection("create_issue")
+        .doc(issueDocId)
+        .collection('all')
+        .doc(allId)
+        .update(issue.toJson());
   }
 
   Future<void> updateUserID() async {
@@ -325,6 +405,8 @@ class FirebaseService {
     FirebaseAuth auth = FirebaseAuth.instance;
     try {
       final user = auth.currentUser;
+      userdata.charges = userdata.charges
+          ?.copyWith(status: 'Pending', feeId: generateCustomString());
       if (user != null) {
         String code = "User signup successfully!!";
         var snackbar = SnackBar(
@@ -341,6 +423,15 @@ class FirebaseService {
     } catch (e) {
       debugPrint('Error adding item: $e');
     }
+  }
+
+  String generateCustomString() {
+    final currentYear = DateTime.now().year;
+    final yearSuffix = (currentYear - 2000).toString().padLeft(2, '0');
+    final random = Random();
+    final randomNumber = (1000 + random.nextInt(9000)).toString();
+
+    return "$yearSuffix-NTU-CS-$randomNumber";
   }
 
   void signInUser(String email, String pw) async {
@@ -393,6 +484,46 @@ class FirebaseService {
       throw Exception(err.toString());
     }
   }
+
+  Future<List<UserProfile>> getHotelfeeOnce() async {
+    try {
+      final snapshotUser = await _firestore
+          .collection('user_profile')
+          .where('isAdmin', isEqualTo: true)
+          .get();
+      log.log(snapshotUser.docs.first['user_id']);
+      final snapshot = await _firestore
+          .collection('user_profile')
+          .where('user_id', isNotEqualTo: snapshotUser.docs.first['user_id'])
+          .get();
+
+      final data =
+          snapshot.docs.map((doc) => UserProfile.fromJson(doc.data())).toList();
+      return data;
+    } catch (e) {
+      log.log("Error fetching user: $e");
+      return [];
+    }
+  }
+
+  Stream<List<UserProfile>> listenToHotelfee() async* {
+    final snapshotUser = await _firestore
+        .collection('user_profile')
+        .where('isAdmin', isEqualTo: true)
+        .get();
+    log.log(snapshotUser.docs.first['user_id']);
+
+    yield* _firestore
+        .collection('user_profile')
+        .where('user_id', isNotEqualTo: snapshotUser.docs.first['user_id'])
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs
+          .map((doc) => UserProfile.fromJson(doc.data()))
+          .toList();
+    });
+  }
+
   // // Update a document
   // Future<void> updateDocument(
   //     String collectionPath, String docId, Map<String, dynamic> data) async {

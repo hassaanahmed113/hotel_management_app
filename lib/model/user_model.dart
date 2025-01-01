@@ -1,7 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class UserProfile {
   final String? blockNumber;
   final bool? isAdmin;
-  final Charges? charges;
+  Charges? charges;
   final String? degree;
   final String? email;
   final String? firstName;
@@ -91,12 +93,18 @@ class Charges {
   final num? parking;
   final num? roomCharge;
   final num? water;
+  final String? status;
+  final String? feeId;
+  final Timestamp? lastPaid; // Change to Timestamp
 
   Charges({
     this.maintenance,
     this.parking,
     this.roomCharge,
     this.water,
+    this.status,
+    this.feeId,
+    this.lastPaid,
   });
 
   factory Charges.fromJson(Map<String, dynamic> json) {
@@ -105,6 +113,9 @@ class Charges {
       parking: json['parking'] as num?,
       roomCharge: json['room_charge'] as num?,
       water: json['water'] as num?,
+      status: json['status'] as String?,
+      feeId: json['feeId'] as String?,
+      lastPaid: json['lastPaid'] as Timestamp,
     );
   }
 
@@ -114,6 +125,9 @@ class Charges {
       'parking': parking,
       'room_charge': roomCharge,
       'water': water,
+      'status': status,
+      'feeId': feeId,
+      'lastPaid': lastPaid,
     };
   }
 
@@ -122,13 +136,18 @@ class Charges {
     num? parking,
     num? roomCharge,
     num? water,
+    String? status,
+    String? feeId,
+    Timestamp? lastPaid,
   }) {
     return Charges(
-      maintenance: maintenance ?? this.maintenance,
-      parking: parking ?? this.parking,
-      roomCharge: roomCharge ?? this.roomCharge,
-      water: water ?? this.water,
-    );
+        maintenance: maintenance ?? this.maintenance,
+        parking: parking ?? this.parking,
+        roomCharge: roomCharge ?? this.roomCharge,
+        water: water ?? this.water,
+        feeId: feeId ?? this.feeId,
+        lastPaid: lastPaid ?? this.lastPaid,
+        status: status ?? this.status);
   }
 
   @override

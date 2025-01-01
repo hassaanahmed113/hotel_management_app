@@ -12,6 +12,7 @@ class Issue {
   final String? phoneNumber;
   final int? roomNumber;
   final String? userId;
+  final String? docId;
 
   Issue({
     this.blockNumber,
@@ -25,6 +26,7 @@ class Issue {
     this.phoneNumber,
     this.roomNumber,
     this.userId,
+    this.docId,
   });
 
   factory Issue.fromJson(Map<String, dynamic> json) {
@@ -44,6 +46,7 @@ class Issue {
       phoneNumber: json['phone_number'] as String?,
       roomNumber: json['room_number'] as int?,
       userId: json['user_id'] as String?,
+      docId: json['docId'] as String?,
     );
   }
 
@@ -61,6 +64,7 @@ class Issue {
       'phone_number': phoneNumber,
       'room_number': roomNumber,
       'user_id': userId,
+      'docId': docId,
     };
   }
 
@@ -76,6 +80,7 @@ class Issue {
     String? phoneNumber,
     int? roomNumber,
     String? userId,
+    String? docId,
   }) {
     return Issue(
       blockNumber: blockNumber ?? this.blockNumber,
@@ -89,6 +94,7 @@ class Issue {
       phoneNumber: phoneNumber ?? this.phoneNumber,
       roomNumber: roomNumber ?? this.roomNumber,
       userId: userId ?? this.userId,
+      docId: docId ?? this.docId,
     );
   }
 

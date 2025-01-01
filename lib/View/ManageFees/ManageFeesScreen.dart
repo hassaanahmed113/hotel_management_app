@@ -1,4 +1,11 @@
+import 'dart:developer';
+
+import 'package:again/View/YourIssues/YourIssuesScreen.dart';
+import 'package:again/controller/hostel_fee_controller.dart';
+import 'package:again/model/user_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class HostelFeeManagementScreen extends StatefulWidget {
@@ -10,143 +17,100 @@ class HostelFeeManagementScreen extends StatefulWidget {
 }
 
 class _HostelFeeManagementScreenState extends State<HostelFeeManagementScreen> {
-  final List<Map<String, dynamic>> students = [
-    {
-      'name': 'Uzair Arshad',
-      'rollNo': '19-NTU-CS-1137',
-      'room': 'Room 201',
-      'fee': 25000,
-      'status': 'Pending',
-      'lastPaid': '-',
-    },
-    {
-      'name': 'Ali Ahmed',
-      'rollNo': '19-NTU-CS-1138',
-      'room': 'Room 202',
-      'fee': 25000,
-      'status': 'Pending',
-      'lastPaid': '-',
-    },
-    {
-      'name': 'Hassan Khan',
-      'rollNo': '19-NTU-CS-1139',
-      'room': 'Room 203',
-      'fee': 25000,
-      'status': 'Paid',
-      'lastPaid': '2024-03-20',
-    },
-  ];
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      appBar: AppBar(
-        foregroundColor: Colors.white,
-        elevation: 0,
-        backgroundColor: const Color(0xff5e35b1),
-        title: Text(
-          'Hostel Fee Management',
-          style: GoogleFonts.poppins(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Search student...',
-                hintStyle: GoogleFonts.poppins(),
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                fillColor: Colors.white,
-                filled: true,
+    return GetBuilder<HostelFeeController>(
+      init: HostelFeeController(),
+      builder: (controller) {
+        return Scaffold(
+          backgroundColor: const Color(0xFFF5F5F5),
+          appBar: AppBar(
+            foregroundColor: Colors.white,
+            elevation: 0,
+            backgroundColor: const Color(0xff5e35b1),
+            title: Text(
+              'Hostel Fee Management',
+              style: GoogleFonts.poppins(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
               ),
             ),
+            centerTitle: true,
           ),
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: students.length,
-              itemBuilder: (context, index) {
-                return StudentFeeCard(
-                  studentData: students[index],
-                  onCollectFee: () => _collectFee(index),
-                );
-              },
-            ),
+          body: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Search student...',
+                    hintStyle: GoogleFonts.poppins(),
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    fillColor: Colors.white,
+                    filled: true,
+                  ),
+                  onChanged: (value) {
+                    log(value);
+                    controller.searchVal = value;
+                    controller.update();
+                    controller.tempSearchList();
+                  },
+                ),
+              ),
+              controller.searchVal.isNotEmpty
+                  ? Expanded(
+                      child: ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: controller.allUserFeesTemp.length,
+                        itemBuilder: (context, index) {
+                          return StudentFeeCard(
+                            studentData: controller.allUserFeesTemp[index],
+                            onCollectFee: (String userId) {
+                              UserProfile user = controller.allUserFeesTemp
+                                  .where(
+                                    (element) => element.userId == userId,
+                                  )
+                                  .first;
+                              controller.updateUserProfile(user);
+                            },
+                          );
+                        },
+                      ),
+                    )
+                  : Expanded(
+                      child: ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: controller.allUserFees.length,
+                        itemBuilder: (context, index) {
+                          return StudentFeeCard(
+                            studentData: controller.allUserFees[index],
+                            onCollectFee: (String userId) {
+                              UserProfile user = controller.allUserFees
+                                  .where(
+                                    (element) => element.userId == userId,
+                                  )
+                                  .first;
+                              controller.updateUserProfile(user);
+                            },
+                          );
+                        },
+                      ),
+                    ),
+            ],
           ),
-        ],
-      ),
-    );
-  }
-
-  void _collectFee(int index) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          'Collect Fee',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Student: ${students[index]['name']}',
-              style: GoogleFonts.poppins(),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Amount: Rs. ${students[index]['fee']}',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: GoogleFonts.poppins(color: Colors.grey),
-            ),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xff5e35b1),
-            ),
-            onPressed: () {
-              setState(() {
-                students[index]['status'] = 'Paid';
-                students[index]['lastPaid'] =
-                    DateTime.now().toString().split(' ')[0];
-              });
-              Navigator.pop(context);
-            },
-            child: Text(
-              'Confirm Payment',
-              style: GoogleFonts.poppins(
-                  color: Colors.white, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
 class StudentFeeCard extends StatelessWidget {
-  final Map<String, dynamic> studentData;
-  final VoidCallback onCollectFee;
+  final UserProfile studentData;
+  final void Function(String userId)? onCollectFee;
 
   const StudentFeeCard({
     Key? key,
@@ -156,7 +120,7 @@ class StudentFeeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isPaid = studentData['status'] == 'Paid';
+    final bool isPaid = studentData.charges?.status == 'Paid';
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -170,7 +134,7 @@ class StudentFeeCard extends StatelessWidget {
                 CircleAvatar(
                   backgroundColor: const Color(0xff5e35b1),
                   child: Text(
-                    studentData['name'][0],
+                    '${studentData.firstName}'.substring(0, 1).toUpperCase(),
                     style: GoogleFonts.poppins(color: Colors.white),
                   ),
                 ),
@@ -180,17 +144,17 @@ class StudentFeeCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        studentData['name'],
+                        '${studentData.firstName} ${studentData.lastName}',
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.w600,
                           fontSize: 16,
                         ),
                       ),
                       Text(
-                        '${studentData['rollNo']} | ${studentData['room']}',
+                        '${studentData.charges?.feeId} | Room ${studentData.roomNumber}',
                         style: GoogleFonts.poppins(
                           color: Colors.grey,
-                          fontSize: 14,
+                          fontSize: 12,
                         ),
                       ),
                     ],
@@ -206,7 +170,7 @@ class StudentFeeCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    studentData['status'],
+                    '${studentData.charges?.status}',
                     style: GoogleFonts.poppins(
                       color: Colors.white,
                       fontSize: 12,
@@ -224,7 +188,7 @@ class StudentFeeCard extends StatelessWidget {
                   style: GoogleFonts.poppins(color: Colors.grey),
                 ),
                 Text(
-                  'Rs. ${studentData['fee']}',
+                  '${'\$'}${(double.parse(studentData.charges?.roomCharge.toString() ?? '') + double.parse(studentData.charges?.maintenance.toString() ?? '') + double.parse(studentData.charges?.parking.toString() ?? '') + double.parse(studentData.charges?.water.toString() ?? '')).toStringAsFixed(2)}',
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.w600,
                     fontSize: 16,
@@ -238,11 +202,11 @@ class StudentFeeCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Last Paid:',
+                    'Last Paid: ',
                     style: GoogleFonts.poppins(color: Colors.grey),
                   ),
                   Text(
-                    studentData['lastPaid'],
+                    '${formatTimestampFromFirebase(studentData.charges?.lastPaid ?? Timestamp(0, 0))}',
                     style: GoogleFonts.poppins(color: Colors.green),
                   ),
                 ],
@@ -257,7 +221,9 @@ class StudentFeeCard extends StatelessWidget {
                     backgroundColor: const Color(0xff5e35b1),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                  onPressed: onCollectFee,
+                  onPressed: () {
+                    onCollectFee!(studentData.userId ?? '');
+                  },
                   child: Text(
                     'Collect Fee',
                     style: GoogleFonts.poppins(

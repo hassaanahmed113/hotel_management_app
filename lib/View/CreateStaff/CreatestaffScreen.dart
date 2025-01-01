@@ -1,8 +1,10 @@
+import 'package:again/controller/staff_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class CreateStaffScreen extends StatelessWidget {
-  const CreateStaffScreen({Key? key}) : super(key: key);
+  final controller = Get.put(StaffController());
 
   @override
   Widget build(BuildContext context) {
@@ -68,6 +70,7 @@ class CreateStaffScreen extends StatelessWidget {
               child: Column(
                 children: [
                   CustomTextField(
+                    controller: controller.username,
                     labelText: 'Username',
                     icon: Icons.person_outline,
                     hint: 'Enter username',
@@ -77,6 +80,7 @@ class CreateStaffScreen extends StatelessWidget {
                     children: [
                       Expanded(
                         child: CustomTextField(
+                          controller: controller.firstName,
                           labelText: 'First Name',
                           icon: Icons.badge_outlined,
                           hint: 'Enter first name',
@@ -85,6 +89,7 @@ class CreateStaffScreen extends StatelessWidget {
                       const SizedBox(width: 16),
                       Expanded(
                         child: CustomTextField(
+                          controller: controller.lastName,
                           labelText: 'Last Name',
                           hint: 'Enter last name',
                         ),
@@ -93,18 +98,21 @@ class CreateStaffScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   CustomTextField(
+                    controller: controller.role,
                     labelText: 'Job Role',
                     icon: Icons.work_outline,
                     hint: 'Enter job role',
                   ),
                   const SizedBox(height: 16),
                   CustomTextField(
+                    controller: controller.email,
                     labelText: 'Email',
                     icon: Icons.email_outlined,
                     hint: 'Enter email address',
                   ),
                   const SizedBox(height: 16),
                   CustomTextField(
+                    controller: controller.pw,
                     labelText: 'Password',
                     icon: Icons.lock_outline,
                     hint: 'Enter password',
@@ -112,6 +120,8 @@ class CreateStaffScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   CustomTextField(
+                    type: TextInputType.number,
+                    controller: controller.phoneNumber,
                     labelText: 'Phone Number',
                     icon: Icons.phone_outlined,
                     hint: 'Enter phone number',
@@ -122,11 +132,32 @@ class CreateStaffScreen extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: _buildCreateButton(),
+      bottomNavigationBar: _buildCreateButton(
+        () {
+          if (controller.username.text.isEmpty ||
+              controller.email.text.isEmpty ||
+              controller.firstName.text.isEmpty ||
+              controller.phoneNumber.text.isEmpty ||
+              controller.lastName.text.isEmpty ||
+              controller.role.text.isEmpty ||
+              controller.pw.text.isEmpty) {
+            // Show snackbar with a message
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Please fill out all fields.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          } else {
+            controller.createStaff();
+            controller.clearText();
+          }
+        },
+      ),
     );
   }
 
-  Widget _buildCreateButton() {
+  Widget _buildCreateButton(void Function()? onPressed) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -148,7 +179,7 @@ class CreateStaffScreen extends StatelessWidget {
           ),
           elevation: 0,
         ),
-        onPressed: () {},
+        onPressed: onPressed,
         child: Text(
           'Create Staff',
           style: GoogleFonts.poppins(
@@ -164,11 +195,15 @@ class CustomTextField extends StatelessWidget {
   final IconData? icon;
   final String hint;
   final bool obscureText;
+  final TextInputType? type;
+  final TextEditingController controller;
 
   const CustomTextField({
     Key? key,
     required this.labelText,
+    required this.controller,
     this.icon,
+    this.type = TextInputType.text,
     required this.hint,
     this.obscureText = false,
   }) : super(key: key);
@@ -200,6 +235,8 @@ class CustomTextField extends StatelessWidget {
             ],
           ),
           child: TextFormField(
+            keyboardType: type,
+            controller: controller,
             style: GoogleFonts.poppins(fontSize: 14),
             obscureText: obscureText,
             decoration: InputDecoration(

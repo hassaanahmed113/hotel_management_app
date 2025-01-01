@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:again/View/Auth/Login/LoginScreen.dart';
 import 'package:again/View/Dashboard/DashboardScreen.dart';
 import 'package:again/firebase_service.dart';
@@ -234,7 +236,8 @@ class _SignupScreenState extends State<SignupScreen> {
                               charges: Charges(
                                   maintenance: 1000.0,
                                   parking: 1000.0,
-                                  roomCharge: 500.0,
+                                  roomCharge: num.parse(
+                                      '${generateRandomNumber()}00.0'),
                                   water: 500.0)));
                           _degreeController.clear();
                           _emailController.clear();
@@ -295,6 +298,11 @@ class _SignupScreenState extends State<SignupScreen> {
         ),
       ),
     );
+  }
+
+  int generateRandomNumber() {
+    final random = Random();
+    return random.nextInt(9) + 1; // Generates a random number between 1 and 9
   }
 
   Widget _buildTextField({

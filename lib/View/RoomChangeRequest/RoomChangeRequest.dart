@@ -1,5 +1,7 @@
 import 'package:again/controller/admin_request_controller.dart';
+import 'package:again/firebase_service.dart';
 import 'package:again/model/change_request_model.dart';
+import 'package:again/model/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -36,18 +38,29 @@ class RoomChangeRequestScreen extends StatelessWidget {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: RequestCard(
-                    onApproved: (String requestId) {
-                      RoomChangeRequest data = controller.allRoomRequest
-                          .where((element) => element.requestId == requestId)
-                          .first;
-                      controller.updateUserRequest(data, 'Approved');
-                    },
-                    onRejected: (String requestId) {
+                    onApproved: (String requestId) async {
                       RoomChangeRequest data = controller.allRoomRequest
                           .where((element) => element.requestId == requestId)
                           .first;
 
-                      controller.updateUserRequest(data, 'Rejected');
+                      UserProfile? user = await FirebaseService()
+                          .getUserForStudent(data.userId ?? "");
+                      user = user?.copyWith(
+                          blockNumber: data.chngBlockNumber,
+                          roomNumber: data.chngRoomNumber);
+                      print(user?.toJson().toString());
+                      controller.updateUserRequest(
+                          data, 'Approved', user ?? UserProfile());
+                    },
+                    onRejected: (String requestId) async {
+                      RoomChangeRequest data = controller.allRoomRequest
+                          .where((element) => element.requestId == requestId)
+                          .first;
+                      UserProfile? user = await FirebaseService()
+                          .getUserForStudent(data.userId ?? "");
+
+                      controller.updateUserRequest(
+                          data, 'Rejected', user ?? UserProfile());
                     },
                     request: request,
                   ),

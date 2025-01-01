@@ -36,7 +36,7 @@ class DashboardController extends GetxController {
         degree: degree.text.isNotEmpty ? degree.text : userProfile?.degree,
       );
       update();
-      await FirebaseService().updateUserProfile(userProfile!).then(
+      await FirebaseService().updateUserProfile(userProfile: userProfile!).then(
         (value) {
           ScaffoldMessenger.of(Get.context!).showSnackBar(
             SnackBar(

@@ -3,6 +3,9 @@ import 'package:again/View/AllStaff/AllStaffScren.dart';
 import 'package:again/View/Auth/Login/LoginScreen.dart';
 import 'package:again/View/RoomChangeRequest/RoomChangeRequest.dart';
 import 'package:again/controller/dashboard_controller.dart';
+import 'package:again/controller/get_issue_controller.dart';
+import 'package:again/controller/hostel_fee_controller.dart';
+import 'package:again/controller/room_available_controller.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -10,11 +13,31 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 // ignore: must_be_immutable
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
   final userController = Get.find<DashboardController>();
 
   bool isAdmin = false;
+
+  final getRoomController = Get.put(RoomAvailableController());
+  final totalStudent = Get.put(HostelFeeController());
+  final getIssues = Get.put(GetIssueController());
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    if (userController.userProfile?.isAdmin == true) {
+      getRoomController.geTotalRooms();
+      totalStudent.getHostelFee();
+      getIssues.getTotalIssue();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -118,13 +141,25 @@ class ProfileScreen extends StatelessWidget {
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceBetween,
                                       children: [
-                                        _buildStatCard(
-                                            'Total Students',
-                                            '2,543',
-                                            Icons.people_outline,
-                                            context),
-                                        _buildStatCard('Total Rooms', '500',
-                                            Icons.apartment_outlined, context),
+                                        GetBuilder<HostelFeeController>(
+                                            init: totalStudent,
+                                            builder: (controller) {
+                                              return _buildStatCard(
+                                                  'Total Students',
+                                                  '${controller.allUserFees.length}',
+                                                  Icons.people_outline,
+                                                  context);
+                                            }),
+                                        GetBuilder<RoomAvailableController>(
+                                          init: getRoomController,
+                                          builder: (controller) {
+                                            return _buildStatCard(
+                                                'Total Rooms',
+                                                '${controller.totalRoom}',
+                                                Icons.apartment_outlined,
+                                                context);
+                                          },
+                                        )
                                       ],
                                     ),
                                     SizedBox(height: 20),
@@ -132,11 +167,15 @@ class ProfileScreen extends StatelessWidget {
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceBetween,
                                       children: [
-                                        _buildStatCard(
-                                            'Complaints',
-                                            '25',
-                                            Icons.warning_amber_outlined,
-                                            context),
+                                        GetBuilder<GetIssueController>(
+                                            init: getIssues,
+                                            builder: (controller) {
+                                              return _buildStatCard(
+                                                  'Complaints',
+                                                  '${controller.totalIssues.length}',
+                                                  Icons.warning_amber_outlined,
+                                                  context);
+                                            }),
                                         _buildStatCard(
                                             'Notices',
                                             '12',
